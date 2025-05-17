@@ -87,8 +87,7 @@ class FounditScraper:
                     break
                 
 
-                all_jobs.extend(jobs)
-
+                all_jobs.extend(new_jobs)
                 logging.info(f" Total unique jobs collected so far: {len(all_jobs)}")
 
                 time.sleep(1) #Sleep between requests

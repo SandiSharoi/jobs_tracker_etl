@@ -34,7 +34,7 @@ def main():
     # For foundit
     print("Scraping IT jobs from Foundit Singapore...")
     foundit_scraper = FounditScraper(headless=True)
-    foundit_df = foundit_scraper.extract_jobs()
+    foundit_df = foundit_scraper.run()
     print(foundit_df.head())
     print("Foundit scraping complete.")
 

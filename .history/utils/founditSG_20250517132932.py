@@ -64,6 +64,9 @@ class FounditScraper:
     def extract_jobs(self):
         start = 0
         all_jobs = []
+        seen_job_ids = set() # to avoid duplicates
+        max_pages_without_new_jobs = 3  # tolerate 3 consecutive pages without new jobs to  prevent infinite loops
+        pages_without_new_jobs = 0
 
         while True:
             logging.info(f" Fetching jobs at start={start}...")
@@ -86,9 +89,25 @@ class FounditScraper:
                     logging.info(" No job data returned. Ending.")
                     break
                 
+                # Filter duplicates
+                new_jobs = []
+                for job in jobs:
+                    job_id = str(job.get("jobId") or job.get("id"))
+                    if job_id not in seen_job_ids:
+                        seen_job_ids.add(job_id)
+                        new_jobs.append(job)
 
-                all_jobs.extend(jobs)
+                #Loop exit conditions
+                if not new_jobs:
+                    pages_without_new_jobs += 1
+                    logging.info(f" No new unique jobs found on this page. Skipped pages so far: {pages_without_new_jobs}")
+                    if pages_without_new_jobs >= max_pages_without_new_jobs:
+                        logging.info(" Too many skipped pages. Assuming end of data. Ending.")
+                        break
+                else:
+                    pages_without_new_jobs = 0  # reset if new jobs found
 
+                all_jobs.extend(new_jobs)
                 logging.info(f" Total unique jobs collected so far: {len(all_jobs)}")
 
                 time.sleep(1) #Sleep between requests
