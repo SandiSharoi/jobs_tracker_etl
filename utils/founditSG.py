@@ -46,8 +46,23 @@ class FounditScraper:
             "limit": 15,
             "query": '""',
             "quickApplyJobs": "true",
-            "industries": ["information technology", "software"],
+            "industries": [
+                "software",
+                "information technology",
+                "software engineering",
+                "it management",
+                "it infrastructure",
+                "cyber security",
+                "cloud computing",
+                "enterprise software",
+                "data center",
+                "cloud data services"
+            ],
+
       }
+
+
+      
 
 #2. Building the API URL
     def build_url(self, start):
@@ -64,6 +79,20 @@ class FounditScraper:
     def extract_jobs(self):
         start = 0
         all_jobs = []
+        seen_job_ids = set() # to avoid duplicates
+        max_pages_without_new_jobs = 3  # tolerate 3 consecutive pages without new jobs to  prevent infinite loops
+        pages_without_new_jobs = 0
+
+        
+        desired_fields = [
+
+            "jobId", "title", "locations", "exp", "updatedAt", "postedBy",
+
+            "industries", "roles", "jobTypes", "qualifications",
+
+            "companyId", "companyName", "salary", "seoCompanyUrl"
+
+        ]
 
         while True:
             logging.info(f" Fetching jobs at start={start}...")
@@ -87,10 +116,29 @@ class FounditScraper:
                     break
                 
 
-                all_jobs.extend(jobs)
+                # Filter duplicates
+                new_jobs = []
+                for job in jobs:
+                    job_id = str(job.get("jobId") or job.get("id"))
+                    if job_id not in seen_job_ids:
+                        seen_job_ids.add(job_id)
+                        
+                        filtered_job = {field: job.get(field) for field in desired_fields}
 
+                        new_jobs.append(filtered_job)
+
+                #Loop exit conditions
+                if not new_jobs:
+                    pages_without_new_jobs += 1
+                    logging.info(f" No new unique jobs found on this page. Skipped pages so far: {pages_without_new_jobs}")
+                    if pages_without_new_jobs >= max_pages_without_new_jobs:
+                        logging.info(" Too many skipped pages. Assuming end of data. Ending.")
+                        break
+                else:
+                    pages_without_new_jobs = 0  # reset if new jobs found
+
+                all_jobs.extend(new_jobs)
                 logging.info(f" Total unique jobs collected so far: {len(all_jobs)}")
-
                 time.sleep(1) #Sleep between requests
                 start += 15
 
@@ -102,7 +150,14 @@ class FounditScraper:
                 logging.info(f" Error parsing response: {e}")
                 break
 
+
+
         if all_jobs:
+
+            unique_job_ids = {str(job.get("jobId") or job.get("id")) for job in all_jobs}
+            logging.info(f" Total jobs scraped: {len(all_jobs)}")
+            logging.info(f" Total unique jobs scraped: {len(unique_job_ids)}")
+            
             self.save_to_json(all_jobs)
 
             foundit_df = pd.DataFrame(all_jobs)
@@ -111,6 +166,7 @@ class FounditScraper:
         else:
             logging.info(" No jobs were scraped.")
             return pd.DataFrame()  #  Return empty DataFrame
+
 
 
 
@@ -128,4 +184,4 @@ class FounditScraper:
             #Uses ensure_ascii=False to preserve Unicode (like company names in other languages).
             #Uses indent=4 for human-readable formatting.
 
-        logging.info(f" Saved {len(jobs)} jobs to Sandi: {output_path}")
+        logging.info(f" Saved {len(jobs)} jobs: {output_path}")
