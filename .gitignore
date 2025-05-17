@@ -1,0 +1,4 @@
+# Ignore logs, output, and .history folders
+logs/
+output/
+.history/
