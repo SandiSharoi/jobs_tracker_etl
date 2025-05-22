@@ -56,7 +56,8 @@ class FounditScraper:
                 "cloud computing",
                 "enterprise software",
                 "data center",
-                "cloud data services"
+                "cloud data services"                
+
             ],
 
       }
@@ -90,8 +91,7 @@ class FounditScraper:
 
             "industries", "roles", "jobTypes", "qualifications",
 
-            "companyId", "companyName", "salary", "seoCompanyUrl", "seoJdUrl"
-
+            "companyId", "companyName", "salary", "seoCompanyUrl", "seoJdUrl", "roles", "functions"
 
         ]
 
@@ -125,10 +125,10 @@ class FounditScraper:
                         seen_job_ids.add(job_id)
                         
                         filtered_job = {field: job.get(field) for field in desired_fields}
-
                         
                         if any(filtered_job.values()):  # Only add if there's at least some data
                             new_jobs.append(filtered_job)
+
 
                 #Loop exit conditions
                 if not new_jobs:
@@ -145,7 +145,8 @@ class FounditScraper:
                 time.sleep(1) #Sleep between requests
                 start += 15
 
-                if start >= 600: #Hard limit to break early for safety
+# start >= 600:
+                if start >= 300: #Hard limit to break early for safety
                     logging.info(" Reached start=600. Stopping to avoid scraping too much.")
                     break
 
@@ -157,13 +158,9 @@ class FounditScraper:
 
         if all_jobs:
 
-
             unique_job_ids = {str(job.get("jobId") or job.get("id")) for job in all_jobs}
             logging.info(f" Total jobs scraped: {len(all_jobs)}")
             logging.info(f" Total unique jobs scraped: {len(unique_job_ids)}")
-            
-            self.save_to_json(all_jobs)
-
             
             foundit_df = pd.DataFrame(all_jobs)
             return foundit_df
@@ -171,4 +168,3 @@ class FounditScraper:
         else:
             logging.info(" No jobs were scraped.")
             return pd.DataFrame()  #  Return empty DataFrame
-
