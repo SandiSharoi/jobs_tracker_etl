@@ -1,8 +1,4 @@
 import argparse
-from utils.jobnetmm import JobNetScraper
-from utils.jobdbsg import JobsDBScraper
-from utils.jobsdbth import JobsDBThScraper
-from utils.jobstreetmalay import JobStreetMalaysia
 from utils.founditSG import FounditScraper
 from utils.data_normalizer import JobDataNormalizer
 import os
